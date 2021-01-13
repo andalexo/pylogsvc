@@ -1,6 +1,6 @@
-"""YAPLOG - Yet another python logger
+"""Logging configuration
 
-Helper module to set up a logging service with some predefined defaults.
+Single and simple function with nice defaults.
 """
 
 import logging
@@ -15,14 +15,16 @@ LOG_DT_FMT = "\033[1m%m-%d %H:%M:%S\033[0m"
 LOG_DIR = join(expanduser('~'),  '.local', 'logs')
 
 
-def set_logging(vcount, msg_fmt=LOG_MSG_FMT, dt_fmt=LOG_DT_FMT, 
+def set_logging(vcount, 
+                msg_fmt=LOG_MSG_FMT, dt_fmt=LOG_DT_FMT, 
                 logdir=LOG_DIR, flog=''):
     """Sets the logging configuration.
 
-    vcount  : logging level in the form of v-counts
-    mfg_fmt : logger message format
-    dt_fmt  : date format
-    flog    : log to file
+    vcount  : (int) logging level in the form of v-counts
+    msg_fmt : (str) logger message format
+    dt_fmt  : (str) datetime format
+    logdir  : (path) log files directory
+    flog    : (str) log to file
     """
 
     logging.addLevelName(logging.DEBUG, "\033[1;34m%-8s\033[1;0m"
