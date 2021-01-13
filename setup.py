@@ -27,7 +27,7 @@ def get_version():
     return '0.0.0'
 
 setup(
-    name='kafka-consumer',
+    name='yaplog',
     version=get_version(),
     packages=find_packages(),
     include_package_data=True,
