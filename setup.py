@@ -1,19 +1,20 @@
-"""A setuptools based setup module for the yaplog.
+"""A setuptools based setup module.
+See:
+https://packaging.python.org/guides/distributing-packages-using-setuptools/
+https://github.com/pypa/sampleproject
 """
 
 from os.path import abspath, dirname, join
 from ast import literal_eval
-# io.open is needed for projects that support Python 2.7
-# It ensures open() defaults to text mode with universal newlines,
-# and accepts an argument to specify the text encoding
-# Python 3 only projects can skip this import
-from io import open
 
 # Always prefer setuptools over distutils
 from setuptools import setup, find_packages
+import pathlib
 
+here = pathlib.Path(__file__).parent.resolve()
 
-here = abspath(dirname(__file__))
+# Get the long description from the README file
+long_description = (here / 'README.md').read_text(encoding='utf-8')
 
 # Get the version from the __init__.py file
 def get_version():
@@ -29,8 +30,17 @@ def get_version():
 setup(
     name='yaplog',
     version=get_version(),
+    description='Yet Another Python Logging module',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
+    url='https://github.com/andalexo/yaplog',
+    classifiers=[
+        'Intended Audience :: Developers',
+    ],
+    keywords='logging, development',
     packages=find_packages(),
-    include_package_data=True,
-    install_requires=[],
-    entry_points={},
+    python_requires='>=3.4, <4',
+    project_urls={
+        'Source': 'https://github.com/andalexo/yaplog',
+    },
 )
