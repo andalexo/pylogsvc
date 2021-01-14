@@ -73,10 +73,6 @@ def set_logging(vcount,
         fhandler.setFormatter(file_formatter)
         handlers.append(fhandler)
 
-        if version_info < (3, 3):
-            # < 3.3 does not have the handlers keyword on basicConfig.
-            logging.getLogger('').addHandler(fhandler)
-
     logging.basicConfig(level=v, handlers=handlers)
 
 
