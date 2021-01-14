@@ -29,6 +29,7 @@ MSG_FMT = "[%(asctime)s][%(levelname)-8s]\
 [%(filename)s, %(lineno)d][%(name)s]  %(message)s"
 DT_FMT = "%m-%d %H:%M:%S"
 LOG_DIR = join(expanduser('~'),  '.local', 'logs')
+MAX_BYTES = 50e6
 
 
 def set_logging(vcount, 
@@ -67,7 +68,7 @@ def set_logging(vcount,
             join(logdir, flog),
             mode='w',
             backupCount=1,
-            maxBytes=50e6
+            maxBytes=MAX_BYTES
         )
         fhandler.setFormatter(file_formatter)
         handlers.append(fhandler)
