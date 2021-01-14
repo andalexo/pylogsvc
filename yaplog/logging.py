@@ -4,19 +4,35 @@ Single and simple function with nice defaults.
 """
 
 import logging
-from sys import version_info
+from logging.handlers import RotatingFileHandler
 from os import makedirs
 from os.path import exists, join, expanduser
+from copy import copy
+from sys import version_info
 
+# COLORS | BLACK | RED   | GREEN | YELLOW| BLUE  |MAGENTA| CYAN  | WHITE
+# -------|---------------------------------------------------------------
+# FG     | 30    | 31    | 32    | 33    | 34    | 35    | 36    | 37 
+# BG     | 40    | 41    | 42    | 43    | 44    | 45    | 46    | 47
+COLOR_SEQ = "\033[1;%dm"
+COLOR = {
+    'DEBUG': "{}{}".format(COLOR_SEQ % 40, COLOR_SEQ % 34),
+    'INFO': "{}{}".format(COLOR_SEQ % 40, COLOR_SEQ % 37),
+    'WARNING': "{}{}".format(COLOR_SEQ % 40, COLOR_SEQ % 33),
+    'ERROR': "{}{}".format(COLOR_SEQ % 40, COLOR_SEQ % 31),
+    'CRITICAL': "{}{}".format(COLOR_SEQ % 41, COLOR_SEQ % 37),
+}
+BOLD_SEQ = "\033[1m"
+RESET_SEQ = "\033[0m"
 
-LOG_MSG_FMT = "[%(asctime)s][%(levelname)-8s]\
-[%(filename)s, %(lineno)d][%(name)s]\t%(message)s"
-LOG_DT_FMT = "\033[1m%m-%d %H:%M:%S\033[0m"
+MSG_FMT = "[%(asctime)s][%(levelname)-8s]\
+[%(filename)s, %(lineno)d][%(name)s]  %(message)s"
+DT_FMT = "%m-%d %H:%M:%S"
 LOG_DIR = join(expanduser('~'),  '.local', 'logs')
 
 
 def set_logging(vcount, 
-                msg_fmt=LOG_MSG_FMT, dt_fmt=LOG_DT_FMT, 
+                msg_fmt=MSG_FMT, dt_fmt=DT_FMT,
                 logdir=LOG_DIR, flog=''):
     """Sets the logging configuration.
 
@@ -27,44 +43,53 @@ def set_logging(vcount,
     flog    : (str) log to file
     """
 
-    logging.addLevelName(logging.DEBUG, "\033[1;34m%-8s\033[1;0m"
-                         % logging.getLevelName(logging.DEBUG))
-    logging.addLevelName(logging.INFO, "\033[1;37m%-8s\033[1;0m"
-                         % logging.getLevelName(logging.INFO))
-    logging.addLevelName(logging.WARNING, "\033[1;33m%-8s\033[1;0m"
-                         % logging.getLevelName(logging.WARNING))
-    logging.addLevelName(logging.ERROR, "\033[1;31m%-8s\033[1;0m"
-                         % logging.getLevelName(logging.ERROR))
-    logging.addLevelName(logging.CRITICAL, "\033[1;41m%-8s\033[1;0m"
-                         % logging.getLevelName(logging.CRITICAL))
-
     if vcount is None or vcount == 0:
-        v = logging.WARNING
+        v = logging.ERROR
     elif vcount == 1:
+        v = logging.WARNING
+    elif vcount == 2:
         v = logging.INFO
     else:
         v = logging.DEBUG
 
-
-    formatter = logging.Formatter(fmt=msg_fmt, datefmt=dt_fmt)
+    stream_formatter = StreamFormatter(fmt=msg_fmt, datefmt=dt_fmt)
+    file_formatter = logging.Formatter(fmt=msg_fmt, datefmt=dt_fmt)
 
     handlers = []
     shandler = logging.StreamHandler()
-    shandler.setFormatter(formatter)
+    shandler.setFormatter(stream_formatter)
     handlers.append(shandler)
     if flog:
         if not exists(logdir):
             makedirs(logdir)
 
-        fhandler = logging.FileHandler(join(logdir, flog), mode='w')
-        fhandler.setFormatter(formatter)
+        fhandler = RotatingFileHandler(
+            join(logdir, flog),
+            mode='w',
+            backupCount=1,
+            maxBytes=50e6
+        )
+        fhandler.setFormatter(file_formatter)
         handlers.append(fhandler)
 
         if version_info < (3, 3):
-            # Python < 3.3 does not have the handlers keyword.
-            # StramHandler will be added by default while the FileHandler
-            # must be added manually.
+            # < 3.3 does not have the handlers keyword on basicConfig.
             logging.getLogger('').addHandler(fhandler)
 
-    logging.basicConfig(level=v, format=msg_fmt, datefmt=dt_fmt,
-                        handlers=handlers)
+    logging.basicConfig(level=v, handlers=handlers)
+
+
+class StreamFormatter(logging.Formatter):
+    def __init__(self, *args, **kwargs):
+        if 'datefmt' in kwargs:
+            kwargs['datefmt'] = BOLD_SEQ + kwargs['datefmt'] + RESET_SEQ
+        super(StreamFormatter, self).__init__(*args, **kwargs)
+
+    def format(self, record: logging.LogRecord) -> str:
+        flevelname = "{}{:8s}{}".format(COLOR[record.levelname],
+                                        record.levelname,
+                                        RESET_SEQ)
+        frecord = copy(record)
+        frecord.levelname = flevelname
+
+        return super().format(frecord)
