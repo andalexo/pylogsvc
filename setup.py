@@ -20,7 +20,7 @@ long_description = (here / 'README.md').read_text(encoding='utf-8')
 def get_version():
     """Scan __init__ file for __version__ and retrieve."""
 
-    finit = join(here, 'yaplog', '__init__.py')
+    finit = join(here, 'logsvc', '__init__.py')
     with open(finit, 'r') as fd:
         for line in fd:
             if line.startswith('__version__'):
@@ -28,12 +28,12 @@ def get_version():
     return '0.0.0'
 
 setup(
-    name='yaplog',
+    name='logsvc',
     version=get_version(),
     description='Yet Another Python Logging module',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/andalexo/yaplog',
+    url='https://gitlab.com/konnecta/panthora-eye/python-modules/logging-service',
     classifiers=[
         'Intended Audience :: Developers',
     ],
@@ -41,6 +41,11 @@ setup(
     packages=find_packages(),
     python_requires='>=3.4, <4',
     project_urls={
-        'Source': 'https://github.com/andalexo/yaplog',
+        'Source': 'https://gitlab.com/konnecta/panthora-eye/python-modules/logging-service',
+    },
+    entry_points={
+        'console_scripts': [
+            'logsvc=logsvc.cli:main',
+        ],
     },
 )

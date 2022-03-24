@@ -8,7 +8,8 @@ from logging.handlers import RotatingFileHandler
 from os import makedirs
 from os.path import exists, join, expanduser
 from copy import copy
-from sys import version_info
+from .monitors import SocketLogLevelMonitor, FileLogLevelMonitor
+
 
 # COLORS | BLACK | RED   | GREEN | YELLOW| BLUE  |MAGENTA| CYAN  | WHITE
 # -------|---------------------------------------------------------------
@@ -27,31 +28,30 @@ RESET_SEQ = "\033[0m"
 
 MSG_FMT = "[%(asctime)s][%(levelname)-8s]\
 [%(filename)s, %(lineno)d][%(name)s]  %(message)s"
-DT_FMT = "%m-%d %H:%M:%S"
+DT_FMT = "%Y-%m-%d %H:%M:%S"
 LOG_DIR = join(expanduser('~'),  '.local', 'logs')
 MAX_BYTES = 50e6
 
 
-def set_logging(vcount, 
+def set_logging(name, level='DEBUG', vcount=None, 
                 msg_fmt=MSG_FMT, dt_fmt=DT_FMT,
-                logdir=LOG_DIR, flog=''):
+                logdir=LOG_DIR, flog='',
+                monitor=False, listen=False):
     """Sets the logging configuration.
 
-    vcount  : (int) logging level in the form of v-counts
+    name    : (str) logger name
+    level   : (str) the logging level ['debug', 'info', 'warning', 'error', 'critical']
+    vcount  : (int) logging level in the form of v-counts. If set level is ignored.
     msg_fmt : (str) logger message format
     dt_fmt  : (str) datetime format
     logdir  : (path) log files directory
     flog    : (str) log to file
+    monitor : (bool) starts the file monitor for log level
+    listen  : (bool) starts the logging server for log commands
     """
-
-    if vcount is None or vcount == 0:
-        v = logging.ERROR
-    elif vcount == 1:
-        v = logging.WARNING
-    elif vcount == 2:
-        v = logging.INFO
-    else:
-        v = logging.DEBUG
+ 
+    level = get_level(level, vcount)
+    logger = logging.getLogger(name)
 
     stream_formatter = StreamFormatter(fmt=msg_fmt, datefmt=dt_fmt)
     file_formatter = logging.Formatter(fmt=msg_fmt, datefmt=dt_fmt)
@@ -59,7 +59,8 @@ def set_logging(vcount,
     handlers = []
     shandler = logging.StreamHandler()
     shandler.setFormatter(stream_formatter)
-    handlers.append(shandler)
+    logger.addHandler(shandler)
+
     if flog:
         if not exists(logdir):
             makedirs(logdir)
@@ -71,9 +72,37 @@ def set_logging(vcount,
             maxBytes=MAX_BYTES
         )
         fhandler.setFormatter(file_formatter)
+        logger.addHandler(fhandler)
         handlers.append(fhandler)
 
-    logging.basicConfig(level=v, handlers=handlers)
+    logger.setLevel(level)
+
+    if listen:
+        mon = SocketLogLevelMonitor(name)
+        mon.start()
+
+    if monitor:
+        mon = FileLogLevelMonitor(name, logging.getLevelName(level),
+                                  logdir=logdir)
+        mon.start()
+
+    return logger
+
+
+def get_level(level, vcount):
+    if vcount is None:
+        return getattr(logging, level.upper())
+
+    if vcount == 0:
+        level = logging.ERROR
+    elif vcount == 1:
+        level = logging.WARNING
+    elif vcount == 2:
+        level = logging.INFO
+    else:
+        level = logging.DEBUG
+    
+    return level
 
 
 class StreamFormatter(logging.Formatter):
